@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ Tạo Chữ ký Email</title>
+    <!-- Favicon / Shortcut Icon -->
+    <link rel="icon" type="image/svg+xml" href="email-message.svg">
+    <link rel="shortcut icon" href="email-message.svg">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #000080;
+            --primary-hover: #00005a;
+            --primary-light: #f0f2ff;
+            --secondary: #0f172a;
+            --bg-app: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --success: #10b981;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #00004d 0%, #000080 50%, #1a1aff 100%);
+            color: #ffffff;
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Editor Section (Left) */
+        .editor-panel {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background-color: #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tabs-header::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            outline: none;
+            padding: 1rem 1.25rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background-color: rgba(37, 99, 235, 0.04);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background-color: #ffffff;
+        }
+
+        .tab-content {
+            padding: 2rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                margin-bottom: 0;
+            }
+            .form-row .form-group {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .input-icon svg {
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: #ffffff;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="url"]:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Color customizer styling */
+        .color-selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            background: none;
+            transition: var(--transition);
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px var(--border-color);
+        }
+
+        input[type="color"]:hover {
+            transform: scale(1.08);
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .color-preset {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 1px var(--border-color);
+            transition: var(--transition);
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
+        }
+
+        /* Range slider styling */
+        .range-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-hover);
+        }
+
+        .range-val {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Image source toggle */
+        .image-toggle {
+            display: flex;
+            background-color: #f1f5f9;
+            border-radius: var(--radius-sm);
+            padding: 0.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .image-toggle-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: calc(var(--radius-sm) - 2px);
+            transition: var(--transition);
+        }
+
+        .image-toggle-btn.active {
+            background-color: #ffffff;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .image-input-container {
+            display: none;
+        }
+
+        .image-input-container.active {
+            display: block;
+        }
+
+        /* File Upload styling */
+        .file-upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background-color: #fdfdfd;
+        }
+
+        .file-upload-zone:hover {
+            border-color: var(--primary);
+            background-color: rgba(37, 99, 235, 0.02);
+        }
+
+        .file-upload-zone svg {
+            width: 2rem;
+            height: 2rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-zone p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-upload-zone p span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .file-upload-zone input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Preview Panel (Right) */
+        .preview-panel {
+            position: sticky;
+            top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .outlook-window {
+            background-color: #ffffff;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .outlook-header {
+            background-color: #f3f4f6;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .outlook-dots {
+            display: flex;
+            gap: 0.35rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .outlook-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .outlook-dot.red { background-color: #ef4444; }
+        .outlook-dot.yellow { background-color: #f59e0b; }
+        .outlook-dot.green { background-color: #10b981; }
+
+        .outlook-field {
+            display: flex;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .outlook-field span:first-child {
+            width: 60px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .outlook-body {
+            padding: 2rem;
+            min-height: 280px;
+            overflow-x: auto;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .email-dummy-text {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            border-bottom: 1px dashed #e2e8f0;
+            padding-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .signature-preview-container {
+            border: 1px dashed transparent;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .signature-preview-container:hover {
+            border-color: #cbd5e1;
+            background-color: #fcfcfc;
+        }
+
+        /* Action Buttons */
+        .actions-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.5rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 640px) {
+            .btn-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn-outline {
+            background-color: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* Alert and Toast messages */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        /* Instructions list */
+        .instructions-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem;
+        }
+
+        .instructions-card h3 {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .inst-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .inst-tab-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .inst-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .inst-content {
+            display: none;
+        }
+
+        .inst-content.active {
+            display: block;
+        }
+
+        .inst-list {
+            padding-left: 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .inst-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .inst-list li code {
+            background-color: #f1f5f9;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #ef4444;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem 1.5rem;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            background-color: #ffffff;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .help-alert {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: #b45309;
+        }
+
+        .help-alert svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Preset select buttons */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .preset-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background-color: #ffffff;
+        }
+
+        .preset-card:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .preset-card.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background-color: var(--primary-light);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Logo circle wrapper */
+        .preview-logo-wrapper {
+            overflow: hidden;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <h1>CÔNG CỤ TẠO CHỮ KÝ EMAIL</h1>
+            <p>Thiết kế chữ ký email chuyên nghiệp, tương thích với Microsoft Outlook và các nền tảng email phổ biến khác.</p>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- LEFT COLUMN (EDITOR & INSTRUCTIONS) -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%;">
+            
+            <!-- EDITOR PANEL -->
+            <div class="editor-panel">
+            <div class="tabs-header" role="tablist">
+                <button class="tab-btn active" onclick="switchTab(event, 'tab-personal')">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Cá nhân
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-contact')">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.802-5.188-4.166-7-7l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"></path></svg>
+                    Liên hệ
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-social')">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935-2.186 2.25 2.25 0 00-3.935 2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"></path></svg>
+                    Mạng xã hội
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-media')">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.9 2.9m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path></svg>
+                    Hình ảnh
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-styling')">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122l9.37-9.37a2.25 2.25 0 113.182 3.182l-9.369 9.369a2.25 2.25 0 01-1.593.659H6.877a.75.75 0 01-.707-.707V17.714a2.25 2.25 0 01.659-1.59l9.37-9.37M9.53 16.122a3 3 0 10-4.242-4.242M9.53 16.122L14.77 21"></path></svg>
+                    Mẫu & Kiểu dáng
+                </button>
+            </div>
+
+            <!-- TAB 1: PERSONAL INFO -->
+            <div id="tab-personal" class="tab-content active">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-name">Họ và Tên</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                            </span>
+                            <input type="text" id="input-name" placeholder="Nguyễn Văn A" value="Nguyễn Văn A" oninput="updateSignature()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-title">Chức vụ / Vị trí</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.095.277-4.223.42-6.378.42s-4.283-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 12.5c-2.783 0-5.462-.472-7.954-1.34a1.88 1.88 0 01-.673-.38m0 0a2.18 2.18 0 01-.75-1.661V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m11.162 0A48.955 48.955 0 0012 4.5c-3.79 0-7.39.429-10.862 1.257M15 7.5a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </span>
+                            <input type="text" id="input-title" placeholder="Chuyên viên Phát triển phần mềm" value="Chuyên viên Phát triển phần mềm" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-dept">Khối / Phòng ban</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.962 5.962 0 00-.733-2.826m0 0a5.962 5.962 0 00-1.493-1.637m4.57 3.199a9.093 9.093 0 010 3.198m0 0a9.093 9.093 0 000-3.198M12 10.5a3.375 3.375 0 110-6.75 3.375 3.375 0 010 6.75zm.707 10.156A6.021 6.021 0 0112 18c-.42 0-.823.043-1.211.124m1.918 2.59A11.96 11.96 0 0012 21c-.42 0-.832-.022-1.238-.066m1.238.066a11.962 11.962 0 01-1.238-.066m0 0a11.962 11.962 0 001.238.066zM12 10.5a3.375 3.375 0 00-3.375-3.375M12 10.5a3.375 3.375 0 013.375-3.375m0 0a3.375 3.375 0 01-3.375 3.375m0 0A3.375 3.375 0 0012 10.5z"></path></svg>
+                            </span>
+                            <input type="text" id="input-dept" placeholder="Khối CNTT & CĐS" value="Khối CNTT & CĐS" oninput="updateSignature()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-company">Tên công ty</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-10.5h16.5M2.25 9h19.5M2.25 12h19.5m-18-6h16.5M2.25 15h19.5M2.25 18h19.5M3 19.5h18M3 4.5h18"></path></svg>
+                            </span>
+                            <input type="text" id="input-company" placeholder="Công ty Cổ phần I Group" value="Công ty Cổ phần I Group" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CONTACT INFO -->
+            <div id="tab-contact" class="tab-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-mobile">Điện thoại di động (Mobile)</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path></svg>
+                            </span>
+                            <input type="text" id="input-mobile" placeholder="090 123 4567" value="090 123 4567" oninput="updateSignature()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-email">Địa chỉ Email</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path></svg>
+                            </span>
+                            <input type="email" id="input-email" placeholder="@igroup.vn" value="@igroup.vn" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="input-web">Trang web (Website)</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253m0 0L21 12"></path></svg>
+                            </span>
+                            <input type="url" id="input-web" placeholder="www.igroup.vn" value="www.igroup.vn" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="input-address">Địa chỉ (Address)</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25C4.5 6.358 7.858 3 12 3s7.5 3.358 7.5 7.5z"></path></svg>
+                        </span>
+                        <input type="text" id="input-address" placeholder="Tầng 27, 152 Điện Biên Phủ, Phường Thạnh Mỹ Tây, (Quận Bình Thạnh) TP.HCM" value="Tầng 27, 152 Điện Biên Phủ, Phường Thạnh Mỹ Tây, (Quận Bình Thạnh) TP.HCM" oninput="updateSignature()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SOCIAL MEDIA -->
+            <div id="tab-social" class="tab-content">
+                <div class="help-alert">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.083 1.083l-.042.02a.75.75 0 01-1.083-1.083zM12 0a12 12 0 100 24 12 12 0 000-24z"></path></svg>
+                    <div>Để ẩn biểu tượng mạng xã hội nào trong chữ ký, chỉ cần xóa trống đường dẫn của mạng xã hội đó.</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-linkedin">LinkedIn Profile URL</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                            </span>
+                            <input type="url" id="input-linkedin" placeholder="https://linkedin.com/in/..." value="https://linkedin.com/company/antigravity" oninput="updateSignature()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-facebook">Facebook Page URL</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                            </span>
+                            <input type="url" id="input-facebook" placeholder="https://facebook.com/..." value="https://facebook.com/antigravity" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-twitter">Twitter / X URL</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                            </span>
+                            <input type="url" id="input-twitter" placeholder="https://twitter.com/..." value="https://twitter.com/antigravity" oninput="updateSignature()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-instagram">Instagram URL</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                            </span>
+                            <input type="url" id="input-instagram" placeholder="https://instagram.com/..." value="" oninput="updateSignature()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: IMAGES & LOGO -->
+            <div id="tab-media" class="tab-content">
+                <div class="help-alert">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div><strong>Lưu ý về hình ảnh:</strong> Link ảnh online được khuyến nghị vì Outlook hiển thị ổn định nhất. Ảnh tải lên dưới dạng Base64 có thể bị một số bộ lọc email chặn hoặc không hiển thị.</div>
+                </div>
+
+                <div class="image-toggle">
+                    <button class="image-toggle-btn active" id="btn-toggle-url" onclick="setImageSource('url')">Sử dụng Link ảnh Online</button>
+                    <button class="image-toggle-btn" id="btn-toggle-file" onclick="setImageSource('file')">Tải ảnh lên từ máy tính</button>
+                </div>
+
+                <!-- URL Image Input -->
+                <div id="image-url-container" class="image-input-container active">
+                    <div class="form-group">
+                        <label for="input-logo-url">Đường dẫn Logo (Image URL)</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"></path></svg>
+                            </span>
+                            <input type="text" id="input-logo-url" placeholder="https://example.com/logo.png" value="logo.png" oninput="updateSignature()">
+                        </div>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">Ví dụ: <code>https://picsum.photos/id/1025/150/150</code> hoặc link logo của công ty bạn.</p>
+                    </div>
+                </div>
+
+                <!-- File Image Input -->
+                <div id="image-file-container" class="image-input-container">
+                    <div class="form-group">
+                        <label>Tải file ảnh logo</label>
+                        <div class="file-upload-zone">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path></svg>
+                            <p>Kéo thả ảnh hoặc <span>Nhấp để duyệt</span></p>
+                            <input type="file" id="input-logo-file" accept="image/*" onchange="handleFileSelect(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label for="input-logo-width">Kích thước Logo (Rộng)</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="input-logo-width" min="40" max="180" value="180" oninput="updateLogoSizeVal(this.value)">
+                            <span class="range-val" id="logo-width-val">180px</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-logo-radius">Bo góc Logo</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="input-logo-radius" min="0" max="90" value="8" oninput="updateLogoRadiusVal(this.value)">
+                            <span class="range-val" id="logo-radius-val">8px</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: TEMPLATES & STYLING -->
+            <div id="tab-styling" class="tab-content">
+                <label>Chọn Mẫu Chữ Ký</label>
+                <div class="presets-grid">
+                    <div class="preset-card active" id="preset-1" onclick="selectTemplate(1)">
+                        Mẫu Cổ điển (Mẫu 1)
+                    </div>
+                    <div class="preset-card" id="preset-2" onclick="selectTemplate(2)">
+                        Mẫu Hiện đại (Mẫu 2)
+                    </div>
+                    <div class="preset-card" id="preset-3" onclick="selectTemplate(3)">
+                        Mẫu Tối giản (Mẫu 3)
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Màu chủ đạo chữ ký</label>
+                        <div class="color-selector-wrapper">
+                            <input type="color" id="input-theme-color" value="#000080" oninput="updateSignature()">
+                            <div class="color-presets">
+                                <div class="color-preset" style="background-color: #000080;" onclick="setPresetColor('#000080')"></div>
+                                <div class="color-preset" style="background-color: #1e3a8a;" onclick="setPresetColor('#1e3a8a')"></div>
+                                <div class="color-preset" style="background-color: #0d9488;" onclick="setPresetColor('#0d9488')"></div>
+                                <div class="color-preset" style="background-color: #059669;" onclick="setPresetColor('#059669')"></div>
+                                <div class="color-preset" style="background-color: #dc2626;" onclick="setPresetColor('#dc2626')"></div>
+                                <div class="color-preset" style="background-color: #ea580c;" onclick="setPresetColor('#ea580c')"></div>
+                                <div class="color-preset" style="background-color: #d97706;" onclick="setPresetColor('#d97706')"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-font">Kiểu Font Chữ</label>
+                        <div class="input-wrapper" style="padding-left: 0;">
+                            <select id="input-font" onchange="updateSignature()" style="padding-left: 1rem;">
+                                <option value="Calibri, Helvetica, sans-serif">Calibri (Khuyên dùng cho Outlook)</option>
+                                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                                <option value="Segoe UI, Tahoma, sans-serif">Segoe UI</option>
+                                <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
+                                <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="Times New Roman, Times, serif">Times New Roman</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="input-font-size">Kích thước chữ (Tổng thể)</label>
+                    <div class="input-wrapper" style="padding-left: 0;">
+                        <select id="input-font-size" onchange="updateSignature()" style="padding-left: 1rem;">
+                            <option value="12px">Nhỏ (12px)</option>
+                            <option value="14px" selected>Bình thường (14px)</option>
+                            <option value="16px">Lớn (16px)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+            <!-- INSTRUCTIONS CARD -->
+            <div class="instructions-card">
+                <h3>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path></svg>
+                    Hướng dẫn cài đặt vào Outlook
+                </h3>
+                
+                <div class="inst-tabs">
+                    <button class="inst-tab-btn active" onclick="switchInstTab(event, 'inst-desktop')">Outlook Desktop (Classic)</button>
+                    <button class="inst-tab-btn" onclick="switchInstTab(event, 'inst-web')">New Outlook / Outlook Web</button>
+                </div>
+
+                <div id="inst-desktop" class="inst-content active">
+                    <ol class="inst-list">
+                        <li>Nhấn nút <strong>"Sao chép Chữ ký (Rich Text)"</strong> phía trên.</li>
+                        <li>Mở ứng dụng <strong>Outlook (Bản cổ điển)</strong> trên máy tính của bạn.</li>
+                        <li>Đi tới: <strong>File</strong> > <strong>Options</strong> > <strong>Mail</strong> > <strong>Signatures...</strong></li>
+                        <li>Nhấn nút <strong>New</strong> để tạo một chữ ký mới và đặt tên.</li>
+                        <li>Tại ô nội dung phía dưới, nhấn <strong>Ctrl + V</strong> (Paste) để dán chữ ký đã copy.</li>
+                        <li>Nhấn <strong>Save</strong> và chọn chữ ký này làm mặc định khi tạo mới hoặc trả lời thư.</li>
+                        <li style="margin-top: 0.5rem; list-style-type: none;">💡 <em>Mẹo nâng cao:</em> Bạn cũng có thể nhấn <strong>"Tải file .htm"</strong> và copy file tải về vào thư mục chữ ký của Windows: <code>%appdata%\Microsoft\Signatures</code>, chữ ký sẽ tự động hiển thị trong danh sách Outlook.</li>
+                    </ol>
+                </div>
+
+                <div id="inst-web" class="inst-content">
+                    <ol class="inst-list">
+                        <li>Nhấn nút <strong>"Sao chép Chữ ký (Rich Text)"</strong> phía trên.</li>
+                        <li>Mở ứng dụng <strong>New Outlook</strong> hoặc truy cập <strong>Outlook Web</strong> (outlook.office.com).</li>
+                        <li>Nhấp vào biểu tượng <strong>Cài đặt (răng cưa)</strong> ở góc trên bên phải (hoặc đi tới <strong>File</strong> > <strong>Settings</strong>).</li>
+                        <li>Đi tới: <strong>Accounts (Tài khoản)</strong> > <strong>Signatures (Chữ ký)</strong>.</li>
+                        <li>Nhấn nút <strong>+ Add signature (Thêm chữ ký)</strong> và đặt tên chữ ký.</li>
+                        <li>Nhấp chuột vào ô soạn thảo văn bản bên dưới, nhấn tổ hợp phím <strong>Ctrl + V</strong> để dán chữ ký đã copy.</li>
+                        <li>Cấu hình tích chọn làm mặc định (như hình khoanh đỏ bên dưới) và nhấn <strong>Save (Lưu)</strong>.</li>
+                    </ol>
+                    <div style="margin-top: 1.25rem; text-align: center;">
+                        <img src="outlook_guide.png" alt="Hướng dẫn cài đặt chữ ký Outlook" style="max-width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: block; margin: 0 auto;">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PREVIEW PANEL -->
+        <div class="preview-panel">
+            
+            <div class="outlook-window">
+                <div class="outlook-header">
+                    <div class="outlook-dots">
+                        <span class="outlook-dot red"></span>
+                        <span class="outlook-dot yellow"></span>
+                        <span class="outlook-dot green"></span>
+                    </div>
+                    <div class="outlook-field">
+                        <span>Đến:</span>
+                        <span>ncc@domain.vn</span>
+                    </div>
+                    <div class="outlook-field">
+                        <span>Tiêu đề:</span>
+                        <span>Đề xuất</span>
+                    </div>
+                </div>
+                <div class="outlook-body">
+                    <div class="email-dummy-text">
+                        Kính gửi Quý đối tác,<br><br>
+                        Rất vui được trao đổi với bạn.<br><br>
+                        Trân trọng,
+                    </div>
+                    
+                    <!-- Real Signature Render HTML Box -->
+                    <div class="signature-preview-container" id="signature-preview-box">
+                        <div id="signature-preview-content">
+                            <!-- JS will inject HTML here -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Action buttons card -->
+            <div class="actions-card">
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="copySignatureRichText()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0A2.25 2.25 0 0113.5 4.5h-3a2.25 2.25 0 01-2.166-1.638m7.332 0c.055.227.084.465.084.712v9.75c0 .247-.029.485-.084.712m-7.332-11.25a2.25 2.25 0 00-2.25 2.25v9.75c0 1.242 1.008 2.25 2.25 2.25h5.25c1.242 0 2.25-1.008 2.25-2.25v-9.75a2.25 2.25 0 00-2.25-2.25H12m0 11.25H9.75M12 16.5H9.75M12 18H9.75"></path></svg>
+                        Sao chép Chữ ký (Rich Text)
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-outline" onclick="copySignatureHTML()">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"></path></svg>
+                            Sao chép Mã HTML
+                        </button>
+                        <button class="btn btn-outline" onclick="downloadSignatureHTML()">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
+                            Tải file .htm (Outlook)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast success">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="toast-message">Đã sao chép vào bộ nhớ tạm!</span>
+    </div>
+
+    <div class="footer">
+        Thiết kế & phát triển bởi <a href="#">Bộ phận Ứng dụng và Chuyển đổi số</a>. <br> Khối Công nghệ thông tin và Chuyển đổi số
+    </div>
+
+    <script>
+        // Global State
+        let currentTemplate = 1;
+        let logoImageSrc = 'logo.png'; // Default logo
+        let imageSourceType = 'url'; // 'url' or 'file'
+
+        // Tabs switcher for Editor UI
+        function switchTab(evt, tabName) {
+            const tabContents = document.querySelectorAll(".tab-content");
+            tabContents.forEach(content => content.classList.remove("active"));
+
+            const tabBtns = document.querySelectorAll(".tab-btn");
+            tabBtns.forEach(btn => btn.classList.remove("active"));
+
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Tabs switcher for Instructions
+        function switchInstTab(evt, instName) {
+            const instContents = document.querySelectorAll(".inst-content");
+            instContents.forEach(content => content.classList.remove("active"));
+
+            const instTabBtns = document.querySelectorAll(".inst-tab-btn");
+            instTabBtns.forEach(btn => btn.classList.remove("active"));
+
+            document.getElementById(instName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Image source toggle handler
+        function setImageSource(type) {
+            imageSourceType = type;
+            document.getElementById('btn-toggle-url').classList.toggle('active', type === 'url');
+            document.getElementById('btn-toggle-file').classList.toggle('active', type === 'file');
+
+            document.getElementById('image-url-container').classList.toggle('active', type === 'url');
+            document.getElementById('image-file-container').classList.toggle('active', type === 'file');
+
+            updateImageSourceData();
+        }
+
+        function updateImageSourceData() {
+            if (imageSourceType === 'url') {
+                const url = document.getElementById('input-logo-url').value.trim();
+                logoImageSrc = url || 'logo.png';
+            } else {
+                const fileInput = document.getElementById('input-logo-file');
+                if (fileInput.files && fileInput.files[0]) {
+                    // Handled during file load, base64 cached in logoImageSrc
+                } else {
+                    logoImageSrc = ''; // empty if no file uploaded
+                }
+            }
+            updateSignature();
+        }
+
+        // Handle uploaded image file
+        function handleFileSelect(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                logoImageSrc = e.target.result;
+                showToast("Đã tải ảnh lên thành công!");
+                updateSignature();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Slider value update helpers
+        function updateLogoSizeVal(val) {
+            document.getElementById('logo-width-val').innerText = val + 'px';
+            updateSignature();
+        }
+
+        function updateLogoRadiusVal(val) {
+            document.getElementById('logo-radius-val').innerText = val + 'px';
+            updateSignature();
+        }
+
+        // Theme Quick preset colors selector
+        function setPresetColor(colorHex) {
+            document.getElementById('input-theme-color').value = colorHex;
+            updateSignature();
+        }
+
+        // Selection of layout Template
+        function selectTemplate(num) {
+            currentTemplate = num;
+            document.querySelectorAll('.preset-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`preset-${num}`).classList.add('active');
+            updateSignature();
+        }
+
+        // Toast success message display
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Core Renderer: Combines templates and inputs to build signature HTML
+        function buildSignatureHTML() {
+            // Gather inputs
+            const name = document.getElementById('input-name').value.trim() || 'Họ và Tên';
+            const title = document.getElementById('input-title').value.trim() || 'Chức vụ';
+            const dept = document.getElementById('input-dept').value.trim();
+            const company = document.getElementById('input-company').value.trim() || 'Tên công ty';
+            const mobile = document.getElementById('input-mobile').value.trim();
+            const email = document.getElementById('input-email').value.trim();
+            const web = document.getElementById('input-web').value.trim();
+            const address = document.getElementById('input-address').value.trim();
+
+            const linkedin = document.getElementById('input-linkedin').value.trim();
+            const facebook = document.getElementById('input-facebook').value.trim();
+            const twitter = document.getElementById('input-twitter').value.trim();
+            const instagram = document.getElementById('input-instagram').value.trim();
+
+            const themeColor = document.getElementById('input-theme-color').value;
+            const fontFamily = document.getElementById('input-font').value;
+            const fontSize = document.getElementById('input-font-size').value;
+
+            const logoWidth = document.getElementById('input-logo-width').value;
+            const logoRadius = document.getElementById('input-logo-radius').value;
+
+            // Compute sub-fields
+            let deptComp = "";
+            if (dept && company) {
+                deptComp = dept + " | " + company;
+            } else {
+                deptComp = dept || company;
+            }
+
+            // Social Media Icons Generator
+            // Clean CDN icons with exact theme color applied if wanted, or flat standard colors
+            // Since PNGs are cached by CDN, these render instantly and cleanly
+            const socialData = [
+                { url: linkedin, img: 'https://cdn-icons-png.flaticon.com/32/145/145807.png', name: 'LinkedIn' },
+                { url: facebook, img: 'https://cdn-icons-png.flaticon.com/32/145/145802.png', name: 'Facebook' },
+                { url: twitter, img: 'https://cdn-icons-png.flaticon.com/32/733/733579.png', name: 'Twitter' },
+                { url: instagram, img: 'https://cdn-icons-png.flaticon.com/32/174/174855.png', name: 'Instagram' }
+            ];
+
+            let socialIconsHTML = "";
+            socialData.forEach(soc => {
+                if (soc.url) {
+                    socialIconsHTML += `<a href="${soc.url}" target="_blank" style="text-decoration: none; display: inline-block; margin-right: 8px;"><img src="${soc.img}" alt="${soc.name}" width="16" height="16" style="border: 0; outline: none; display: block; width: 16px; height: 16px;"></a>`;
+                }
+            });
+
+            // Social Section wrapping table
+            if (socialIconsHTML !== "") {
+                socialIconsHTML = `
+                <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 10px;">
+                    <tr>
+                        <td style="line-height: 1;">
+                            ${socialIconsHTML}
+                        </td>
+                    </tr>
+                </table>`;
+            }
+
+            // Create Contact Rows based on values
+            let contactRows = "";
+
+            if (mobile) {
+                contactRows += `
+                <tr>
+                    <td style="padding: 2px 0; font-size: ${fontSize}; color: #555555;">
+                        <span style="font-weight: bold; color: ${themeColor}; margin-right: 4px;">Phone:</span> 
+                        <a href="tel:${mobile}" style="color: #555555; text-decoration: none;">${mobile}</a>
+                    </td>
+                </tr>`;
+            }
+            if (email) {
+                contactRows += `
+                <tr>
+                    <td style="padding: 2px 0; font-size: ${fontSize}; color: #555555;">
+                        <span style="font-weight: bold; color: ${themeColor}; margin-right: 4px;">Email:</span> 
+                        <a href="mailto:${email}" style="color: #555555; text-decoration: none;">${email}</a>
+                    </td>
+                </tr>`;
+            }
+            if (web) {
+                const displayWeb = web.replace(/^(https?:\/\/)?(www\.)?/, '');
+                const targetWeb = web.startsWith('http') ? web : 'https://' + web;
+                contactRows += `
+                <tr>
+                    <td style="padding: 2px 0; font-size: ${fontSize}; color: #555555;">
+                        <span style="font-weight: bold; color: ${themeColor}; margin-right: 4px;">Website:</span> 
+                        <a href="${targetWeb}" target="_blank" style="color: #555555; text-decoration: none;">${displayWeb}</a>
+                    </td>
+                </tr>`;
+            }
+            if (address) {
+                contactRows += `
+                <tr>
+                    <td style="padding: 2px 0; font-size: ${fontSize}; color: #555555; line-height: 1.3;">
+                        <span style="font-weight: bold; color: ${themeColor}; margin-right: 4px;">Address:</span> 
+                        <span style="color: #555555;">${address}</span>
+                    </td>
+                </tr>`;
+            }
+
+            // Table of contact info
+            let contactTableHTML = "";
+            if (contactRows !== "") {
+                contactTableHTML = `<table cellpadding="0" cellspacing="0" border="0">${contactRows}</table>`;
+            }
+
+            // Logo HTML
+            let logoHTML = "";
+            if (logoImageSrc) {
+                logoHTML = `<img src="${logoImageSrc}" alt="Logo" width="${logoWidth}" style="display: block; border: 0; max-width: 100%; height: auto; border-radius: ${logoRadius}px; width: ${logoWidth}px;" />`;
+            }
+
+            let renderedHTML = "";
+
+            if (currentTemplate === 1) {
+                // TEMPLATE 1: Classic Split (Logo left, details right, separated by vertical bar)
+                renderedHTML = `
+                <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; font-family: ${fontFamily}; line-height: 1.4; text-align: left;">
+                    <tr>
+                        ${logoHTML ? `
+                        <td style="vertical-align: top; padding-right: 15px; padding-bottom: 5px;">
+                            ${logoHTML}
+                        </td>
+                        <td style="width: 2px; background-color: ${themeColor}; vertical-align: top; padding: 0;" width="2"></td>
+                        ` : ''}
+                        <td style="vertical-align: top; padding-left: ${logoHTML ? '15px' : '0px'};">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="font-size: 16px; font-weight: bold; color: ${themeColor}; line-height: 1.2;">
+                                        ${name}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 13px; color: #64748b; font-weight: 500; padding-bottom: 8px; line-height: 1.2;">
+                                        ${title} ${deptComp ? ` | ${deptComp}` : ''}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        ${contactTableHTML}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        ${socialIconsHTML}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>`;
+            } else if (currentTemplate === 2) {
+                // TEMPLATE 2: Modern Stack (Logo top, details bottom)
+                renderedHTML = `
+                <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; font-family: ${fontFamily}; line-height: 1.4; text-align: left;">
+                    ${logoHTML ? `
+                    <tr>
+                        <td style="padding-bottom: 12px;">
+                            ${logoHTML}
+                        </td>
+                    </tr>
+                    ` : ''}
+                    <tr>
+                        <td>
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="font-size: 16px; font-weight: bold; color: ${themeColor}; line-height: 1.2;">
+                                        ${name}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 13px; color: #64748b; font-weight: 500; line-height: 1.2; padding-bottom: 4px;">
+                                        ${title}
+                                    </td>
+                                </tr>
+                                ${deptComp ? `
+                                <tr>
+                                    <td style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 10px;">
+                                        ${deptComp}
+                                    </td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                    <td style="height: 1px; background-color: #cbd5e1; padding: 0;" height="1"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 8px;">
+                                        ${contactTableHTML}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        ${socialIconsHTML}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>`;
+            } else if (currentTemplate === 3) {
+                // TEMPLATE 3: Minimalist (No logo, thick horizontal border at the top, compact details)
+                renderedHTML = `
+                <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; font-family: ${fontFamily}; line-height: 1.4; text-align: left;">
+                    <tr>
+                        <td style="border-top: 3px solid ${themeColor}; padding-top: 10px;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="font-size: 18px; font-weight: bold; color: ${themeColor}; line-height: 1.2; font-family: 'Outfit', ${fontFamily};">
+                                        ${name}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 12px; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 1px; padding-bottom: 12px;">
+                                        ${title} ${deptComp ? `@ ${deptComp}` : ''}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        ${contactTableHTML}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        ${socialIconsHTML}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>`;
+            }
+
+            return renderedHTML;
+        }
+
+        // Live Preview renderer trigger
+        function updateSignature() {
+            const container = document.getElementById('signature-preview-content');
+            container.innerHTML = buildSignatureHTML();
+        }
+
+        // Copy Rich Text format (copies layout & styling for direct copy-paste to Outlook/Word)
+        function copySignatureRichText() {
+            const container = document.getElementById('signature-preview-content');
+            
+            // Modern Clipboard API attempt
+            if (navigator.clipboard && window.ClipboardItem) {
+                try {
+                    const htmlBlob = new Blob([container.innerHTML], { type: 'text/html' });
+                    const textBlob = new Blob([container.innerText], { type: 'text/plain' });
+                    const data = new ClipboardItem({
+                        'text/html': htmlBlob,
+                        'text/plain': textBlob
+                    });
+                    
+                    navigator.clipboard.write([data]).then(() => {
+                        showToast("Đã sao chép Chữ ký thành công! Hãy dán (Ctrl+V) vào Outlook.");
+                    }).catch(err => {
+                        fallbackCopy(container);
+                    });
+                    return;
+                } catch (e) {
+                    // fall through to legacy copy
+                }
+            }
+            
+            fallbackCopy(container);
+        }
+
+        // Fallback copying logic using older Select Range + execCommand
+        function fallbackCopy(element) {
+            const range = document.createRange();
+            range.selectNode(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("Đã sao chép Chữ ký (Rich Text) vào bộ nhớ tạm!");
+                } else {
+                    showToast("Không thể sao chép. Vui lòng quét chọn chữ ký và copy thủ công.");
+                }
+            } catch (err) {
+                showToast("Lỗi sao chép: Vui lòng tự bôi đen chữ ký và copy.");
+            }
+            selection.removeAllRanges();
+        }
+
+        // Copy raw HTML source code
+        function copySignatureHTML() {
+            const htmlCode = buildSignatureHTML();
+            navigator.clipboard.writeText(htmlCode).then(() => {
+                showToast("Đã sao chép Mã HTML vào bộ nhớ tạm!");
+            }).catch(err => {
+                showToast("Lỗi sao chép mã nguồn HTML.");
+            });
+        }
+
+        function downloadSignatureHTML() {
+            // Tách các thẻ đóng/mở body và html để tránh việc các server live-reload (như VS Code Live Server)
+            // quét trúng các thẻ đóng mở của HTML và chèn nhầm mã reload vào giữa code Javascript.
+            const htmlContent = '<!DOCTYPE html>\n' +
+                '<ht' + 'ml>\n' +
+                '<he' + 'ad>\n' +
+                '    <meta charset="utf-8">\n' +
+                '    <title>Email Signature</title>\n' +
+                '</he' + 'ad>\n' +
+                '<bo' + 'dy>\n' +
+                '    ' + buildSignatureHTML() + '\n' +
+                '</bo' + 'dy>\n' +
+                '</ht' + 'ml>';
+
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            // Check if IE/Edge
+            if (navigator.msSaveBlob) {
+                navigator.msSaveBlob(blob, "signature.htm");
+            } else {
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute("download", "signature.htm");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            showToast("Đã tải file signature.htm xuống máy tính!");
+        }
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Apply default theme color input setup
+            // Update live preview with initial states
+            updateSignature();
+            
+            // Drag and drop events for file zone
+            const dropZone = document.querySelector('.file-upload-zone');
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--primary)';
+                    dropZone.style.backgroundColor = 'rgba(37, 99, 235, 0.05)';
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--border-color)';
+                    dropZone.style.backgroundColor = '#fdfdfd';
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    const fileInput = document.getElementById('input-logo-file');
+                    fileInput.files = files;
+                    const event = { target: { files: files } };
+                    handleFileSelect(event);
+                }
+            }, false);
+        });
+    </script>
+</body>
+</html>
